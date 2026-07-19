@@ -26,9 +26,8 @@ class Analysis:
                 feature2 = self.featureNames[j]
                 self.featurePairs.append([feature1, feature2])
 
-    def countFeaturePairs(self):
+    def countFeaturePairs(self, data):
         """Count edible and poisonous occurrences for each feature-value pair combination."""
-        data = self.dataset.data.original
         result = list()
 
         def countOf(tally, value1, value2, edibility):
@@ -59,11 +58,13 @@ class Analysis:
 
     def findMinimalSetOfIdentifyingFeaturePairs(self, edibility):
         """Find the minimal set of feature pairs that identify edible/poisonous mushrooms."""
-        data = self.dataset.data.original
 
         if edibility not in ('e', 'p'):
             raise ValueError("edibility must be 'e' or 'p'")
 
+        data = self.dataset.data.original
+        desiredCount = 'edibleCount' if edibility == 'e' else 'poisonousCount'
+        undesiredCount = 'poisonousCount' if edibility == 'e' else 'edibleCount'
         minimalSet = pd.DataFrame(columns=[
             'feature1Name',
             'feature1Value',
@@ -73,12 +74,9 @@ class Analysis:
             'poisonousCount',
         ])
 
-        desiredCount = 'edibleCount' if edibility == 'e' else 'poisonousCount'
-        undesiredCount = 'poisonousCount' if edibility == 'e' else 'edibleCount'
-
         while True:
             topFeaturePair = (self
-                .countFeaturePairs()
+                .countFeaturePairs(data)
                 .query(f'{desiredCount} > 0 and {undesiredCount} == 0')
                 .sort_values(by=[desiredCount], ascending=False)
                 .iloc[0]
