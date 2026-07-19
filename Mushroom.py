@@ -74,7 +74,8 @@ class Analysis:
             'poisonousCount',
         ])
 
-        while True:
+        totalAccountedFor = 0
+        while totalAccountedFor < self.edibilityCount[edibility]:
             matching = (self
                 .countFeaturePairs(data)
                 .query(f'{desiredCount} > 0 and {undesiredCount} == 0')
@@ -84,12 +85,10 @@ class Analysis:
                 break
             topFeaturePair = matching.iloc[0]
             minimalSet.loc[len(minimalSet.index)] = topFeaturePair
-            totalAccountedFor = minimalSet[desiredCount].sum()
+            totalAccountedFor += topFeaturePair[desiredCount]
             alreadyConsidered1 = data[topFeaturePair['feature1Name']] == topFeaturePair['feature1Value']
             alreadyConsidered2 = data[topFeaturePair['feature2Name']] == topFeaturePair['feature2Value']
             data = data.drop(data[alreadyConsidered1 & alreadyConsidered2].index)
-            if totalAccountedFor >= self.edibilityCount[edibility]:
-                break
 
         return minimalSet
 
