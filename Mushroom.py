@@ -75,12 +75,14 @@ class Analysis:
         ])
 
         while True:
-            topFeaturePair = (self
+            matching = (self
                 .countFeaturePairs(data)
                 .query(f'{desiredCount} > 0 and {undesiredCount} == 0')
                 .sort_values(by=[desiredCount], ascending=False)
-                .iloc[0]
             )
+            if matching.empty:
+                break
+            topFeaturePair = matching.iloc[0]
             minimalSet.loc[len(minimalSet.index)] = topFeaturePair
             totalAccountedFor = minimalSet[desiredCount].sum()
             alreadyConsidered1 = data[topFeaturePair['feature1Name']] == topFeaturePair['feature1Value']
