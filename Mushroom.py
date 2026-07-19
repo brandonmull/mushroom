@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import re
 from IPython.display import HTML, display
 
-class Analysis:
+class Analyzer:
     """Class for analyzing mushroom dataset."""
 
     def __init__(self, dataset):
@@ -92,6 +92,13 @@ class Analysis:
 
         return minimalSet
 
+
+class Visualizer:
+    """Class for visualizing mushroom dataset features."""
+
+    def __init__(self, dataset):
+        self.dataset = dataset
+        self.featureMap = self.parseFeatureValueMap(dataset.metadata['additional_info']['variable_info'])
 
     def buildFeatureCrosstab(self, feature1Name, feature2Name, edibilityValues=('e', 'p')):
         """Build a cross-tabulation xarray for two features, split by edibility."""
@@ -191,11 +198,10 @@ class Analysis:
         ax.legend()
 
         if showValueLegend:
-            featureMap = self.parseFeatureValueMap(self.dataset.metadata['additional_info']['variable_info'])
             legendTextBlocks = []
             for featureName in (feature1Name, feature2Name):
-                if featureName in featureMap:
-                    valueMap = featureMap[featureName]
+                if featureName in self.featureMap:
+                    valueMap = self.featureMap[featureName]
                     legendLines = [f'{featureName} values:']
                     legendLines += [f'{code} = {label}' for code, label in sorted(valueMap.items())]
                     legendTextBlocks.append('\n'.join(legendLines))
@@ -230,11 +236,10 @@ class Analysis:
 
         legendHtml = ''
         if showValueLegend:
-            featureMap = self.parseFeatureValueMap(self.dataset.metadata['additional_info']['variable_info'])
             legendCells = []
             for featureName in (feature1Name, feature2Name):
-                if featureName in featureMap:
-                    valueMap = featureMap[featureName]
+                if featureName in self.featureMap:
+                    valueMap = self.featureMap[featureName]
                     rows = ''.join(
                         f'<tr><td style="padding:4px 8px;">{code}</td><td style="padding:4px 8px;">{label}</td></tr>'
                         for code, label in sorted(valueMap.items())
