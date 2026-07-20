@@ -26,8 +26,12 @@ class Analyzer:
                 feature2 = self.featureNames[j]
                 self.featurePairs.append([feature1, feature2])
 
-    def countFeaturePairs(self, data):
-        """Count edible and poisonous occurrences for each feature-value pair combination."""
+    def countExclusiveFeaturePairs(self, data):
+        """Count edible and poisonous occurrences for each feature-value pair combination.
+
+        A feature pair is exclusive when all mushrooms sharing that pair of values
+        have the same edibility (either all edible or all poisonous).
+        """
         result = list()
 
         def countOf(tally, value1, value2, edibility):
@@ -56,8 +60,12 @@ class Analyzer:
         return pd.DataFrame(result)
 
 
-    def findMinimalSetOfIdentifyingFeaturePairs(self, edibility):
-        """Find the minimal set of feature pairs that identify edible/poisonous mushrooms."""
+    def findMinimalSetOfExclusiveFeaturePairs(self, edibility):
+        """Find the minimal set of exclusive feature pairs that identify edible/poisonous mushrooms.
+
+        An exclusive feature pair for a given class is a pair of feature values that appears
+        only on mushrooms of that class and never on the other class.
+        """
 
         if edibility not in ('e', 'p'):
             raise ValueError("edibility must be 'e' or 'p'")
@@ -77,7 +85,7 @@ class Analyzer:
         totalAccountedFor = 0
         while totalAccountedFor < self.edibilityCount[edibility]:
             matching = (self
-                .countFeaturePairs(data)
+                .countExclusiveFeaturePairs(data)
                 .query(f'{desiredCount} > 0 and {undesiredCount} == 0')
                 .sort_values(by=[desiredCount], ascending=False)
             )
