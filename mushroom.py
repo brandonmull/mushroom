@@ -14,7 +14,7 @@ class Analyzer:
         self.edibility_count = self.dataset.data.original.groupby('poisonous').size()
         self.feature_names = self.dataset.data.features.columns.values
         self.feature_count = len(self.feature_names)
-        self.feature_pairs = list()
+        self.feature_spaces = list()
         self.feature_values = dict()
 
         for i, feature in enumerate(self.feature_names):
@@ -24,13 +24,13 @@ class Analyzer:
             feature1 = self.feature_names[i]
             for j in range(i + 1, self.feature_count):
                 feature2 = self.feature_names[j]
-                self.feature_pairs.append([feature1, feature2])
+                self.feature_spaces.append([feature1, feature2])
 
-    def count_exclusive_feature_pairs(self, data):
-        """Count edible and poisonous occurrences for each feature-value pair combination.
+    def enumerate_edibility_signals(self, data):
+        """Enumerate every possible edibility signal within each feature space.
 
-        A feature pair is exclusive when all mushrooms sharing that pair of values
-        have the same edibility (either all edible or all poisonous).
+        An edibility signal is exclusive when all mushrooms sharing that combination
+        of feature values have the same edibility (either all edible or all poisonous).
         """
         result = list()
 
@@ -41,9 +41,9 @@ class Analyzer:
                     and edibility in tally[value1][value2]
                     else 0)
 
-        for i, feature_pair in enumerate(self.feature_pairs):
-            feature1 = feature_pair[0]
-            feature2 = feature_pair[1]
+        for i, feature_space in enumerate(self.feature_spaces):
+            feature1 = feature_space[0]
+            feature2 = feature_space[1]
             tally = data.groupby([feature1, feature2, 'poisonous']).size()
 
             for v1, value1 in enumerate(self.feature_values[feature1]):
@@ -60,11 +60,11 @@ class Analyzer:
         return pd.DataFrame(result)
 
 
-    def find_minimal_set_of_exclusive_feature_pairs(self, edibility):
-        """Find the minimal set of exclusive feature pairs that identify edible/poisonous mushrooms.
+    def find_minimal_edibility_signals(self, edibility):
+        """Find the minimal set of edibility signals that identify edible/poisonous mushrooms.
 
-        An exclusive feature pair for a given class is a pair of feature values that appears
-        only on mushrooms of that class and never on the other class.
+        An exclusive edibility signal for a given class is a combination of feature values
+        that appears only on mushrooms of that class and never on the other class.
         """
 
         if edibility not in ('e', 'p'):
@@ -85,17 +85,17 @@ class Analyzer:
         total_accounted_for = 0
         while total_accounted_for < self.edibility_count[edibility]:
             matching = (self
-                .count_exclusive_feature_pairs(data)
+                .enumerate_edibility_signals(data)
                 .query(f'{desired_count} > 0 and {undesired_count} == 0')
                 .sort_values(by=[desired_count], ascending=False)
             )
             if matching.empty:
                 break
-            top_feature_pair = matching.iloc[0]
-            minimal_set.loc[len(minimal_set.index)] = top_feature_pair
-            total_accounted_for += top_feature_pair[desired_count]
-            already_considered_1 = data[top_feature_pair['feature1_name']] == top_feature_pair['feature1_value']
-            already_considered_2 = data[top_feature_pair['feature2_name']] == top_feature_pair['feature2_value']
+            top_signal = matching.iloc[0]
+            minimal_set.loc[len(minimal_set.index)] = top_signal
+            total_accounted_for += top_signal[desired_count]
+            already_considered_1 = data[top_signal['feature1_name']] == top_signal['feature1_value']
+            already_considered_2 = data[top_signal['feature2_name']] == top_signal['feature2_value']
             data = data.drop(data[already_considered_1 & already_considered_2].index)
 
         return minimal_set
